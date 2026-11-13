@@ -8,6 +8,7 @@ ESP32 펌웨어(Arduino 스케치) 폴더입니다.
 | --- | --- | --- |
 | [Dual_IMU_Test](Dual_IMU_Test/Dual_IMU_Test.ino) | 1차 실습 코드. MPU6050 2개를 레지스터로 직접 읽어 가속도·자이로 출력 (500ms 간격) | 없음 |
 | [Posture_AI_Test](Posture_AI_Test/Posture_AI_Test.ino) | IMU 2개 + DRV2605L 초기화, 두 IMU의 X축 가속도 출력 (1초 간격) | Adafruit MPU6050, Adafruit DRV2605 Library |
+| [ALIGN_logger](ALIGN_logger/ALIGN_logger.ino) | 50Hz 목표·12채널·64비트 `time_us`·순번 출력. `S` 시작 / `X` 중지 | 없음 (Wire와 ESP32 기본 기능 사용) |
 
 ## 보드 설정
 
@@ -16,6 +17,8 @@ ESP32 펌웨어(Arduino 스케치) 폴더입니다.
 - I2C: SDA = GPIO 21, SCL = GPIO 22, IMU 1 = `0x68`(흉추), IMU 2 = `0x69`(요추)
 
 설치 방법은 [docs/dev-setup.md](../docs/dev-setup.md), 배선은 [docs/hardware.md](../docs/hardware.md)를 보세요.
+
+실측 로거는 I2C 400kHz, 가속도 g, 자이로 deg/s로 출력합니다. [Python CSV 수집기](../python/data_logger/README_ko.md) 또는 [실시간 판정 데모](../python/ALIGN_live_demo/README_ko.md) 중 하나만 포트를 열어 사용합니다. 초기화와 범위 검증 등 자세한 내용은 로거 안내를 따릅니다.
 
 ## 규칙
 

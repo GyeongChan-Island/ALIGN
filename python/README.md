@@ -8,10 +8,11 @@
 | --- | --- |
 | [01_Posture_AI_Data_Practice](01_Posture_AI_Data_Practice.ipynb) | 50Hz·20초짜리 가상 센서 데이터(흉추·요추 각도, 0 = 중립 / 1 = 전방 굽힘) 생성, 그래프, CSV 저장 |
 
-PR #3에서 리뷰 중:
+데이터 수집·판정 코드:
 
-- `collect_csv.py`: ESP32 로거 출력 → CSV + `summary.json` + `events.txt` 저장 (pyserial)
-- 실시간 판정 데모: `train_model.py`(세션 분리 평가 + 학습), `live_predict.py`(시리얼 실시간 판정·CSV 재생), `evaluate_model.py`
+- [data_logger](data_logger/README_ko.md): ESP32 로거 출력 → CSV + `summary.json` + `events.txt` 저장 (pyserial)
+- [ALIGN_live_demo](ALIGN_live_demo/README_ko.md): `train_model.py`(세션/피험자 분리 평가 + 학습), `live_predict.py`(시리얼 실시간 판정·CSV 재생), `evaluate_model.py`(새 기록 독립 평가). 손 기울기 연습 모델 포함
+- [analysis](analysis/README.md): 제공한 10세션의 신호 분석과 그림 재현
 
 예정:
 
@@ -22,6 +23,7 @@ PR #3에서 리뷰 중:
 
 - Colab: GitHub의 노트북 주소에서 `github.com`을 `githubtocolab.com`으로 바꿔 열면 됩니다.
 - 로컬: `pip install -r python/requirements.txt` 후 Jupyter로 엽니다. 마지막 셀의 `google.colab` 다운로드 코드는 Colab 전용이라 로컬에서는 건너뜁니다.
+- 실시간 데모: `python/ALIGN_live_demo` 폴더에서 `py -m pip install -r requirements.txt` 후 `run_demo.cmd`를 실행합니다. 노트북용 설치 목록과 실시간 데모용 설치 목록은 각각의 용도에 맞게 사용합니다.
 
 ## 규칙
 

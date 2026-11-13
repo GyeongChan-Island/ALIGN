@@ -34,9 +34,13 @@ ALIGN/
 ├── arduino/                  ESP32 펌웨어 (Arduino 스케치)
 │   ├── Dual_IMU_Test/          1차 실습: IMU 2개 동시 읽기 (라이브러리 없이 레지스터 직접 접근)
 │   ├── Posture_AI_Test/        IMU 2개 + 진동 드라이버 초기화 테스트 (Adafruit 라이브러리)
+│   ├── ALIGN_logger/           50Hz·12채널 실측 로거 (S/X 명령)
 │   └── libraries.txt           CI가 설치하는 Arduino 라이브러리 목록
 ├── python/                   데이터 처리·AI 모델 (Colab 노트북)
 │   ├── 01_Posture_AI_Data_Practice.ipynb
+│   ├── data_logger/           Windows CSV 수집기
+│   ├── ALIGN_live_demo/       재학습·실시간 0/1 판정·CSV 재생
+│   ├── analysis/              손 기울기 분석 재현 스크립트
 │   └── requirements.txt
 ├── data/                     측정 데이터 (CSV + summary.json + events.txt)와 형식 안내
 ├── docs/                     하드웨어, 개발환경, 실습 계획 문서
@@ -48,7 +52,7 @@ ALIGN/
 | 실습 | 단계 | 상태 |
 | --- | --- | --- |
 | 1차 (11/08) | 개발환경 세팅, MPU6050 2개 동시 연결·데이터 수신 | ✅ 완료 |
-| 실습 밖 (11/13) | 50Hz 데이터 로거, 손 기울기 수집 연습 10세션, 실시간 0/1 판정 데모 (PR #3) | 🔄 리뷰 중 |
+| 실습 밖 (11/13) | 50Hz 데이터 로거, 손 기울기 수집 연습 10세션, 실시간 0/1 판정 데모 | ✅ 손 기울기 연습 검증 완료 (착용 실험 전) |
 | 2차 | 자이로 바이어스 보정, 상보 필터, 상대 각도 계산 | ⏳ 예정 |
 | 3차 | 조끼 장착, 라벨 붙은 착용 데이터 수집 (60분 이상) | ⏳ 예정 |
 | 실습 밖 | 판정 방식 ①②③ 구현 및 비교 | ⏳ 예정 |
@@ -61,6 +65,19 @@ ALIGN/
 1. 개발환경 설치: [docs/dev-setup.md](docs/dev-setup.md) (Arduino IDE, ESP32 보드 패키지, 라이브러리, USB 드라이버, Colab)
 2. 펌웨어: [arduino/README.md](arduino/README.md)
 3. 데이터·AI: [python/README.md](python/README.md)
+
+### Windows에서 바로 실행
+
+저장소를 내려받은 뒤 `python/ALIGN_live_demo` 폴더에서 PowerShell을 엽니다.
+
+```powershell
+py -m pip install -r requirements.txt
+py live_predict.py --port COM13
+```
+
+COM13은 실제 ESP32 포트로 바꿉니다. Arduino 시리얼 모니터와 CSV 수집기는 닫고, 창에서 **실시간 연결**을 누릅니다. ESP32에는 [ALIGN_logger.ino](arduino/ALIGN_logger/ALIGN_logger.ino)가 업로드되어 있어야 합니다. 다음부터는 같은 폴더의 `run_demo.cmd`를 실행해도 됩니다.
+
+학습 모델이 포함되어 있어 재학습 없이 시험할 수 있습니다. **현재 모델은 손으로 센서를 기울인 상태 0/1 구분용**입니다. 실제 착용 데이터로 바꾸는 방법은 [데모 안내](python/ALIGN_live_demo/README_ko.md), 실측 저장은 [로거 안내](python/data_logger/README_ko.md)를 참고합니다.
 
 ## 협업
 
