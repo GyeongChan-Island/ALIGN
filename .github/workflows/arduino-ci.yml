@@ -1,0 +1,93 @@
+# ESP32 스케치 자동 빌드
+# - arduino/<이름>/<이름>.ino 형태의 스케치를 모두 찾아 컴파일한다 (Arduino IDE 폴더 규칙)
+# - 개발 환경과 같은 esp32 코어 3.3.12, 보드 "ESP32 Dev Module"
+# - 빌드된 펌웨어(.bin)는 Actions 실행 페이지의 Artifacts에서 내려받을 수 있다
+name: Arduino CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "arduino/**"
+      - ".github/workflows/arduino-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "arduino/**"
+      - ".github/workflows/arduino-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ESP32_CORE_VERSION: "3.3.12"
+  FQBN: "esp32:esp32:esp32"   # ESP32 Dev Module
+  ARDUINO_BOARD_MANAGER_ADDITIONAL_URLS: "https://espressif.github.io/arduino-esp32/package_esp32_index.json"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find sketches
+        id: find
+        run: |
+          # 폴더 이름과 .ino 파일 이름이 같은 것만 스케치로 인정
+          sketches=$(find arduino -name '*.ino' | while read -r f; do
+            d=$(dirname "$f")
+            [ "$(basename "$d")" = "$(basename "$f" .ino)" ] && echo "$d"
+          done | sort -u)
+          echo "Found sketches:"
+          echo "${sketches:-(none)}"
+          {
+            echo "list<<EOF"
+            echo "$sketches"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          [ -n "$sketches" ] && echo "any=true" >> "$GITHUB_OUTPUT" || echo "any=false" >> "$GITHUB_OUTPUT"
+
+      - name: Set up arduino-cli
+        if: steps.find.outputs.any == 'true'
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Cache ESP32 core
+        if: steps.find.outputs.any == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.arduino15
+          key: arduino15-esp32-${{ env.ESP32_CORE_VERSION }}
+
+      - name: Install ESP32 core
+        if: steps.find.outputs.any == 'true'
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install "esp32:esp32@${ESP32_CORE_VERSION}"
+
+      - name: Compile sketches
+        if: steps.find.outputs.any == 'true'
+        run: |
+          failed=0
+          while read -r d; do
+            [ -z "$d" ] && continue
+            name=$(basename "$d")
+            echo "::group::Compile $name"
+            if arduino-cli compile --fqbn "$FQBN" --warnings default \
+                 --output-dir "build/$name" "$d"; then
+              echo "$name: OK"
+            else
+              echo "::error file=$d/$name.ino::$name compile failed"
+              failed=1
+            fi
+            echo "::endgroup::"
+          done <<< "${{ steps.find.outputs.list }}"
+          exit $failed
+
+      - name: Upload firmware
+        if: steps.find.outputs.any == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ github.sha }}
+          path: build/**/*.bin
+          retention-days: 30
