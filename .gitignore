@@ -230,3 +230,12 @@ data/**/*.heic
 
 # Arduino IDE / arduino-cli 빌드 출력
 arduino/**/build/
+
+# Local collection / inference / exploratory outputs
+python/ALIGN_live_demo/logs/
+python/ALIGN_live_demo/test_results/
+python/ALIGN_live_demo/models/body*/
+python/ALIGN_live_demo/models/hand_retrained/
+python/data_logger/data/
+results/
+.github-sync/
