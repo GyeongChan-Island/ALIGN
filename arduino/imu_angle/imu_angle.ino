@@ -1,16 +1,21 @@
 #include <Wire.h>
+#include <math.h>
 
 #define MPU1_ADDR 0x68   // 흉추
 #define MPU2_ADDR 0x69   // 요추
 #define SAMPLE_US 10000  // 10ms = 100Hz
+#define DT 0.01f         // 샘플 간격(초)
+#define ALPHA 0.98f      // 자이로 신뢰 비율
 
 struct Imu {
   uint8_t addr;
   float gBiasX, gBiasY, gBiasZ;   // 자이로 바이어스 (°/s)
+  float roll, pitch;              // 상보 필터 결과 각도 (°)
+  float accRoll, accPitch;        // 가속도만으로 구한 각도 (비교용)
 };
 
-Imu imu1 = {MPU1_ADDR, 0, 0, 0};
-Imu imu2 = {MPU2_ADDR, 0, 0, 0};
+Imu imu1 = {MPU1_ADDR};
+Imu imu2 = {MPU2_ADDR};
 
 void writeReg(uint8_t addr, uint8_t reg, uint8_t val) {
   Wire.beginTransmission(addr);
@@ -20,10 +25,10 @@ void writeReg(uint8_t addr, uint8_t reg, uint8_t val) {
 }
 
 bool initMPU(uint8_t addr) {
-  writeReg(addr, 0x6B, 0x00);   // PWR_MGMT_1: 슬립 해제
-  writeReg(addr, 0x1A, 0x03);   // CONFIG: DLPF 약 44Hz
-  writeReg(addr, 0x1B, 0x00);   // GYRO_CONFIG: ±250°/s (131 LSB/°/s)
-  writeReg(addr, 0x1C, 0x00);   // ACCEL_CONFIG: ±2g (16384 LSB/g)
+  writeReg(addr, 0x6B, 0x00);   // 슬립 해제
+  writeReg(addr, 0x1A, 0x03);   // DLPF 약 44Hz
+  writeReg(addr, 0x1B, 0x00);   // 자이로 ±250°/s
+  writeReg(addr, 0x1C, 0x00);   // 가속도 ±2g
   Wire.beginTransmission(addr);
   return Wire.endTransmission() == 0;
 }
@@ -38,7 +43,7 @@ bool readMPU(uint8_t addr, float &ax, float &ay, float &az,
   int16_t rAX = (Wire.read() << 8) | Wire.read();
   int16_t rAY = (Wire.read() << 8) | Wire.read();
   int16_t rAZ = (Wire.read() << 8) | Wire.read();
-  Wire.read(); Wire.read();                       // 온도는 건너뜀
+  Wire.read(); Wire.read();
   int16_t rGX = (Wire.read() << 8) | Wire.read();
   int16_t rGY = (Wire.read() << 8) | Wire.read();
   int16_t rGZ = (Wire.read() << 8) | Wire.read();
@@ -48,7 +53,6 @@ bool readMPU(uint8_t addr, float &ax, float &ay, float &az,
   return true;
 }
 
-// 정지 상태에서 N번 읽어 평균 = 바이어스
 void calibrateGyro(Imu &m, int n) {
   float ax, ay, az, gx, gy, gz;
   double sx = 0, sy = 0, sz = 0;
@@ -63,16 +67,42 @@ void calibrateGyro(Imu &m, int n) {
   m.gBiasX = sx / ok;  m.gBiasY = sy / ok;  m.gBiasZ = sz / ok;
 }
 
-void printImu(const char *name, float ax, float ay, float az,
-              float gx, float gy, float gz) {
-  Serial.printf("[%s] Accel: %.2f, %.2f, %.2f | Gyro: %.2f, %.2f, %.2f\n",
-                name, ax, ay, az, gx, gy, gz);
+// 가속도(중력 방향)로 기울기 계산
+void accelAngles(float ax, float ay, float az, float &roll, float &pitch) {
+  roll  = atan2(ay, az) * 180.0 / PI;
+  pitch = atan2(-ax, sqrt(ay * ay + az * az)) * 180.0 / PI;
+}
+
+// 센서 하나 업데이트: 읽기 → 바이어스 제거 → 상보 필터
+bool updateImu(Imu &m) {
+  float ax, ay, az, gx, gy, gz;
+  if (!readMPU(m.addr, ax, ay, az, gx, gy, gz)) return false;
+
+  gx -= m.gBiasX;  gy -= m.gBiasY;
+
+  accelAngles(ax, ay, az, m.accRoll, m.accPitch);
+  m.roll  = ALPHA * (m.roll  + gx * DT) + (1 - ALPHA) * m.accRoll;
+  m.pitch = ALPHA * (m.pitch + gy * DT) + (1 - ALPHA) * m.accPitch;
+  return true;
+}
+
+// 시작 각도를 가속도 값으로 맞춤 (0°에서 시작하면 수렴까지 몇 초 걸림)
+void initAngles(Imu &m) {
+  float ax, ay, az, gx, gy, gz;
+  if (readMPU(m.addr, ax, ay, az, gx, gy, gz)) {
+    accelAngles(ax, ay, az, m.roll, m.pitch);
+  }
+}
+
+void printImu(const char *name, Imu &m) {
+  Serial.printf("[%s] Roll: %6.1f (acc %6.1f) | Pitch: %6.1f (acc %6.1f)\n",
+                name, m.roll, m.accRoll, m.pitch, m.accPitch);
 }
 
 void setup() {
   Serial.begin(115200);
   Wire.begin(21, 22);
-  Wire.setClock(400000);          // 400kHz: 센서 2개를 100Hz로 읽기에 여유
+  Wire.setClock(400000);
   delay(1000);
 
   Serial.println(initMPU(imu1.addr) ? "IMU 1 connected! (0x68)" : "IMU 1 connection FAILED!");
@@ -82,31 +112,27 @@ void setup() {
   delay(500);
   calibrateGyro(imu1, 1000);
   calibrateGyro(imu2, 1000);
-
   Serial.printf("IMU1 bias: %.3f, %.3f, %.3f\n", imu1.gBiasX, imu1.gBiasY, imu1.gBiasZ);
   Serial.printf("IMU2 bias: %.3f, %.3f, %.3f\n", imu2.gBiasX, imu2.gBiasY, imu2.gBiasZ);
+
+  initAngles(imu1);
+  initAngles(imu2);
   Serial.println("----------------------------");
 }
 
 void loop() {
   static uint32_t last = micros();
   static int count = 0;
-  if (micros() - last < SAMPLE_US) return;   // 100Hz로 읽기
+  if (micros() - last < SAMPLE_US) return;
   last += SAMPLE_US;
 
-  float a1[3] = {0}, g1[3] = {0}, a2[3] = {0}, g2[3] = {0};
-  float gx, gy, gz;
-  bool ok1 = readMPU(imu1.addr, a1[0], a1[1], a1[2], gx, gy, gz);
-  if (ok1) { g1[0] = gx - imu1.gBiasX; g1[1] = gy - imu1.gBiasY; g1[2] = gz - imu1.gBiasZ; }
-  bool ok2 = readMPU(imu2.addr, a2[0], a2[1], a2[2], gx, gy, gz);
-  if (ok2) { g2[0] = gx - imu2.gBiasX; g2[1] = gy - imu2.gBiasY; g2[2] = gz - imu2.gBiasZ; }
+  bool ok1 = updateImu(imu1);
+  bool ok2 = updateImu(imu2);
 
-  if (++count < 50) return;                  // 50번(0.5초)에 한 번만 출력
+  if (++count < 50) return;   // 0.5초마다 출력
   count = 0;
 
-  if (ok1) printImu("IMU 1", a1[0], a1[1], a1[2], g1[0], g1[1], g1[2]);
-  else     Serial.println("[IMU 1] Read failed!");
-  if (ok2) printImu("IMU 2", a2[0], a2[1], a2[2], g2[0], g2[1], g2[2]);
-  else     Serial.println("[IMU 2] Read failed!");
+  if (ok1) printImu("IMU 1", imu1); else Serial.println("[IMU 1] Read failed!");
+  if (ok2) printImu("IMU 2", imu2); else Serial.println("[IMU 2] Read failed!");
   Serial.println("----------------------------");
 }
