@@ -46,3 +46,5 @@ ESP32를 꽂아도 COM 포트가 안 보이면 USB-UART 칩 드라이버가 없�
 ```bash
 pip install -r python/requirements.txt
 ```
+
+ESP32에서 데이터를 받는 로거(`collect_csv.py`)와 실시간 데모는 Windows PC에서 직접 실행하며 `pyserial`이 필요합니다 (`py -m pip install "pyserial>=3.5,<4"`). 실행 전에 Arduino 시리얼 모니터를 닫아야 COM 포트를 열 수 있습니다.
