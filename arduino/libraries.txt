@@ -1,0 +1,5 @@
+# CI(GitHub Actions)가 스케치를 컴파일하기 전에 설치하는 Arduino 라이브러리 목록
+# 한 줄에 하나, Library Manager에 보이는 이름 그대로. 의존 라이브러리는 자동 설치된다.
+# 새 라이브러리를 #include 했다면 여기에도 추가할 것.
+Adafruit MPU6050
+Adafruit DRV2605 Library
