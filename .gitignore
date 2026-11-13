@@ -218,3 +218,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ALIGN: 촬영 영상·사진은 저장소에 올리지 않는다 (data/README.md 참고)
+data/**/*.mp4
+data/**/*.mov
+data/**/*.avi
+data/**/*.jpg
+data/**/*.jpeg
+data/**/*.png
+data/**/*.heic
+
+# Arduino IDE / arduino-cli 빌드 출력
+arduino/**/build/

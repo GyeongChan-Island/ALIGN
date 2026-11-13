@@ -1,3 +1,6 @@
+// Posture_AI_Test
+// IMU 2개(Adafruit MPU6050 라이브러리)와 진동 드라이버(DRV2605L)를 초기화하고
+// 두 IMU의 X축 가속도를 1초마다 출력하는 테스트 스케치.
 
 #include <Wire.h>
 #include <Adafruit_MPU6050.h>
@@ -9,6 +12,12 @@ Adafruit_MPU6050 upper;  // 상부 등 IMU
 Adafruit_MPU6050 lower;  // 허리 IMU
 Adafruit_DRV2605 motor;  // 진동모터 드라이버
 
+// I2C 핀
+// ESP32-WROOM-32 (ESP32 Dev Module): SDA = GPIO21, SCL = GPIO22  <- 현재 사용
+// XIAO ESP32-S3로 바꾸면 5, 6으로 변경
+#define I2C_SDA 21
+#define I2C_SCL 22
+
 bool upperOK = false;
 bool lowerOK = false;
 bool motorOK = false;
@@ -17,9 +26,8 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  // 2. XIAO ESP32-S3 I2C 설정
-  // SDA = GPIO5, SCL = GPIO6
-  Wire.begin(5, 6);
+  // 2. I2C 설정
+  Wire.begin(I2C_SDA, I2C_SCL);
 
   Serial.println("Posture AI Starting!");
 

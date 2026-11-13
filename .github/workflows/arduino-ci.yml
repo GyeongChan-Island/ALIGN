@@ -1,6 +1,7 @@
 # ESP32 스케치 자동 빌드
 # - arduino/<이름>/<이름>.ino 형태의 스케치를 모두 찾아 컴파일한다 (Arduino IDE 폴더 규칙)
 # - 개발 환경과 같은 esp32 코어 3.3.12, 보드 "ESP32 Dev Module"
+# - 필요한 라이브러리는 arduino/libraries.txt 에서 읽어 설치한다
 # - 빌드된 펌웨어(.bin)는 Actions 실행 페이지의 Artifacts에서 내려받을 수 있다
 name: Arduino CI
 
@@ -64,6 +65,18 @@ jobs:
         run: |
           arduino-cli core update-index
           arduino-cli core install "esp32:esp32@${ESP32_CORE_VERSION}"
+
+      - name: Install libraries
+        if: steps.find.outputs.any == 'true'
+        run: |
+          # arduino/libraries.txt 에 적힌 라이브러리 설치 (빈 줄, # 주석 무시)
+          [ -f arduino/libraries.txt ] || exit 0
+          arduino-cli lib update-index
+          grep -v '^\s*#' arduino/libraries.txt | sed 's/\r$//' | while read -r lib; do
+            [ -z "$lib" ] && continue
+            echo "Installing: $lib"
+            arduino-cli lib install "$lib"
+          done
 
       - name: Compile sketches
         if: steps.find.outputs.any == 'true'
