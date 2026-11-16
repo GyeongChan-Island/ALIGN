@@ -20,10 +20,17 @@
 
 ## 다시 만들기
 
-학습 데이터는 ALIGN-data `body/2026-11-13`에 원본 그대로 있습니다. 세션 기록·빈 센서 검사가 들어간 `train_model.py`는 이 빈 센서 세션에서 **일부러 멈추므로**, v0을 그대로 재현하려면 그 기능이 들어가기 전 코드(이 모델을 올린 커밋의 `train_model.py`)로 학습합니다.
+학습 데이터는 ALIGN-data `body/2026-11-13`에 원본 그대로 있습니다.
+
+**세션 기록(PR #7)이 들어간 뒤의 `train_model.py`로는 v0이 나오지 않습니다.** 이 학습기는 ALIGN-data의 `sessions.csv`를 자동으로 찾아 `180239`(`status=exclude`)를 빼고 **19세션, 296/380** 모델을 만듭니다. 오류 없이 끝나므로 v0과 헷갈리지 않게 주의하세요. `--no-sessions`를 붙이면 빈 센서 검사에서 멈춥니다.
+
+v0(20세션, 293/400)을 그대로 재현하려면 세션 기록이 들어가기 전 학습기(PR #6 머지 커밋 `82fdadb`)를 꺼내 씁니다. `python/ALIGN_live_demo`에서 실행합니다.
 
 ```powershell
-py train_model.py --data ..\..\..\ALIGN-data\body\2026-11-13 --kind body --split session --out models/body_P01_v0_rebuild
+py -c "import subprocess; open('train_model_v0.py','wb').write(subprocess.check_output(['git','show','82fdadb:python/ALIGN_live_demo/train_model.py']))"
+py train_model_v0.py --data ..\..\..\ALIGN-data\body\2026-11-13 --kind body --split session --out models/body_P01_v0_rebuild
 ```
+
+첫 줄은 그 시점 파일을 바이트 그대로 저장합니다. PowerShell의 `>`는 버전에 따라 UTF-16 등으로 바꿔 저장해서 쓰지 않습니다. `train_model_v0.py`는 재현용 임시 파일이므로 커밋하지 않습니다. 결과는 부동소수점 오차(약 2e-15) 안에서 v0과 같고, 평가(293/400)는 완전히 같습니다.
 
 빈 센서 세션을 뺀 다음 버전은 `body_P01_v1`로 따로 올립니다.
