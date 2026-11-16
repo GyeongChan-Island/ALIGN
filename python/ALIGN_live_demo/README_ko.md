@@ -73,7 +73,9 @@ py live_predict.py --port COM13 --model models/hand_retrained/model.json
 ## 5. 나중에 실제 착용 데이터로 바꾸기
 
 1. 센서 장착 위치와 축 방향, 정상/불량 라벨 기준을 정하고 기록합니다.
-2. 기존 수집기로 별도 폴더(예: `D:\ALIGN_body_data`)에 저장합니다. 손 기울기 연습 자료와 섞지 않습니다.
+2. 기존 수집기로 데이터 저장소 [ALIGN-data](https://github.com/GyeongChan-Island/ALIGN-data)의 `body/<날짜>` 폴더에 저장하고, `sessions.csv`에 세션을 기록합니다. 손 기울기 연습 자료와 섞지 않습니다. 아래 예의 `D:\ALIGN_body_data` 대신 `..\..\..\ALIGN-data\body`처럼 지정하면 됩니다.
+
+   `train_model.py`와 `evaluate_model.py`는 데이터 폴더부터 그 저장소 루트까지 `sessions.csv`를 자동으로 찾아 `status=exclude` 세션을 빼고, 사용한 장부 경로와 제외 세션을 출력합니다. 센서 하나가 전부 0인 세션이 장부에 표시되지 않았으면 학습이 멈춥니다.
 3. 라벨 0과 1 각각 여러 독립 세션을 수집합니다. 세션 분할 학습에는 최소 라벨당 2세션이 필요하며, 최소 개수만으로 충분한 성능이 보장되지는 않습니다.
 4. 다음 명령으로 새 모델을 만듭니다.
 

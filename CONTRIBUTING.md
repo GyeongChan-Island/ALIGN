@@ -60,6 +60,7 @@ git push -u origin feat/imu-read
 
 ## 파일 규칙
 
+- **측정 데이터**는 이 저장소에 PR로 올리지 않고 [ALIGN-data](https://github.com/GyeongChan-Island/ALIGN-data)에 바로 push합니다 (fork·PR 없음). 세션마다 `sessions.csv`에 한 줄을 추가하고, 문제가 있는 세션은 지우지 말고 `status=exclude`와 사유를 적습니다. 방법은 ALIGN-data README에 있습니다.
 - **Arduino 스케치**는 `arduino/<이름>/<이름>.ino`처럼 폴더 이름과 파일 이름을 같게 둡니다. 다르면 Arduino IDE와 CI가 스케치로 인식하지 않습니다.
 - 새 Arduino 라이브러리를 쓰면 [arduino/libraries.txt](arduino/libraries.txt)에 이름을 추가합니다. 추가하지 않으면 CI 빌드가 실패합니다.
 - **노트북**은 `python/NN_설명.ipynb`처럼 번호를 붙이고, 커밋 전에 큰 출력(이미지·긴 로그)은 지웁니다.

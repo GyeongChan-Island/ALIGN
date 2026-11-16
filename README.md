@@ -42,7 +42,7 @@ ALIGN/
 │   ├── ALIGN_live_demo/       재학습·실시간 0/1 판정·CSV 재생
 │   ├── analysis/              손 기울기 분석 재현 스크립트
 │   └── requirements.txt
-├── data/                     측정 데이터 (CSV + summary.json + events.txt)와 형식 안내
+├── data/                     데이터 형식 안내 + CI용 예시 (실측 데이터는 ALIGN-data 저장소)
 ├── docs/                     하드웨어, 개발환경, 실습 계획 문서
 └── .github/workflows/        스케치 자동 빌드 (GitHub Actions)
 ```

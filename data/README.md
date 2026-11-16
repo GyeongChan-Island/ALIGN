@@ -1,6 +1,20 @@
 # data
 
-측정 데이터 폴더입니다. 형식은 [ESP32 로거](../arduino/ALIGN_logger/ALIGN_logger.ino)와 [CSV 수집기](../python/data_logger/collect_csv.py)가 실제로 저장하는 형식을 따릅니다. 이 형식에서 벗어난 CSV는 학습 스크립트(`train_model.py`)가 거부합니다.
+측정 데이터 **형식 안내**와 CI용 작은 예시 데이터 폴더입니다. 형식은 [ESP32 로거](../arduino/ALIGN_logger/ALIGN_logger.ino)와 [CSV 수집기](../python/data_logger/collect_csv.py)가 실제로 저장하는 형식을 따릅니다. 이 형식에서 벗어난 CSV는 학습 스크립트(`train_model.py`)가 거부합니다.
+
+> **실측 데이터는 이 저장소가 아니라 [ALIGN-data](https://github.com/GyeongChan-Island/ALIGN-data)에 올립니다.** ALIGN-data는 fork·PR 없이 바로 push하고, push할 때마다 빈 센서·가속도 이상·누락 세션을 자동 검사합니다. 이 저장소에는 코드 테스트용 예시(`hand_tilt_practice_01`)만 둡니다.
+
+## 세션 기록 (ALIGN-data의 `sessions.csv`)
+
+모든 세션을 한 줄씩 적는 장부입니다. 열은 `session_id, date, subject, condition, label, mount, status, note`이고, 자세한 규칙은 ALIGN-data README에 있습니다.
+
+- `status=exclude`인 세션은 `train_model.py`·`evaluate_model.py`가 **자동으로 뺍니다.** 데이터 폴더부터 위로 올라가며 `sessions.csv`를 찾되 그 데이터가 든 Git 저장소 밖으로는 나가지 않고(최대 3단계), 사용한 장부 경로를 출력합니다. 학습 결과(`model.json`)와 평가 결과(`evaluation.json`)의 `session_registry`에 제외한 세션과 사유를 남깁니다. 파일 이름이 로거 형식이 아니어도 CSV 첫 행의 `session_id`로 제외를 적용합니다.
+- `status=check` 세션, 장부에 없는 세션, 장부와 CSV의 `label`이 다른 세션은 포함하되 경고를 출력합니다.
+- 장부에 같은 `session_id`가 두 줄 있으면 멈춥니다. 한 줄로 합치세요.
+- 다른 장부를 쓰려면 `--sessions 경로`, 장부를 무시하려면 `--no-sessions`를 붙입니다.
+- 센서 하나의 6채널이 전부 0인 행이 1% 이상이면서 5행 이상인 세션은 학습·평가가 멈춥니다. 원인을 확인하고 장부에서 `exclude`로 표시하세요.
+
+특이사항의 원인·사진·해결 과정은 노션 🐞 트러블슈팅에 쓰고, 장부의 `note`에 링크를 남깁니다.
 
 ## 세션 하나 = 파일 3개
 
@@ -109,13 +123,13 @@ start_us,end_us,action
 
 학습·실시간 판정 코드는 같은 세션 안의 **연속 50행(약 1초)**을 겹치지 않게 묶어 한 구간으로 씁니다. 누락·시간 이상·포화가 생기면 그 구간은 버리고 새로 모읍니다. 평가할 때는 같은 세션(나중에는 같은 사람)이 학습과 평가에 섞이지 않게 나눕니다.
 
-## 지금 있는 데이터
+## 이 저장소에 있는 데이터
 
 | 이름 | 날짜 | 내용 | 주의 |
 | --- | --- | --- | --- |
-| [hand_tilt_practice_01](hand_tilt_practice_01) | 2026-11-13 | P01, 10세션 × 10초 (라벨 0·1 각 5세션) | **센서를 손으로 기울인 연습 데이터**. 착용 데이터가 아니므로 착용 데이터와 섞어 학습하지 않습니다 |
+| [hand_tilt_practice_01](hand_tilt_practice_01) | 2026-11-13 | P01, 10세션 × 10초 (라벨 0·1 각 5세션) | **센서를 손으로 기울인 연습 데이터**. Python CI가 재학습 검사에 사용. 착용 데이터와 섞어 학습하지 않습니다 |
 
-손 기울기 연습 데이터와 실제 착용 데이터는 **폴더를 나눠** 보관합니다.
+착용 데이터(예: 2026-11-13 P01 20세션)는 ALIGN-data의 `body/` 아래에 있습니다. 손 기울기 연습 데이터와 실제 착용 데이터는 **폴더를 나눠** 보관합니다.
 
 ## 올리지 않는 것
 

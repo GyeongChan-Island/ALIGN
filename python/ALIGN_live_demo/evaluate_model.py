@@ -12,7 +12,8 @@ import sys
 import zipfile
 
 from common import load_model, predict
-from train_model import load_sessions, metrics
+from train_model import (add_registry_arguments, load_sessions, metrics,
+                         print_registry_report, resolve_registry, use_utf8_output)
 
 
 def training_manifest(model):
@@ -99,8 +100,13 @@ def run(args):
         raise ValueError("결과 파일이 이미 있습니다. 새로운 --out 폴더를 지정하세요.")
     model = load_model(model_path)
     training_manifest(model)
-    sessions = load_sessions(source)
+    registry = resolve_registry(source, getattr(args, "sessions", None), getattr(args, "no_sessions", False))
+    registry_info = {}
+    sessions = load_sessions(source, registry, registry_info)
+    print_registry_report(registry, registry_info)
     result = evaluate_saved(model, sessions)
+    # 평가 대상에서 뺀 세션과 사유를 결과에 남겨, 보고서 숫자를 그대로 재현할 수 있게 한다.
+    result["session_registry"] = registry_info
     result["model_sha256"] = hashlib.sha256(model_path.read_bytes()).hexdigest()
     result["model_file"] = model_path.name
     out.mkdir(parents=True, exist_ok=True)
@@ -133,7 +139,9 @@ def main(argv=None):
     parser.add_argument("--model", required=True)
     parser.add_argument("--data", required=True, help="새 테스트 CSV 폴더 또는 ZIP")
     parser.add_argument("--out", required=True, help="새 결과 폴더")
+    add_registry_arguments(parser)
     args = parser.parse_args(argv)
+    use_utf8_output()
     try:
         run(args)
         return 0
