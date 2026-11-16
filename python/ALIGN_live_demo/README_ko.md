@@ -134,14 +134,14 @@ py evaluate_model.py --model models/hand/model.json --data "D:\ALIGN_hand_test" 
 
 PC가 절전 상태가 되지 않게 하고 실시간 수집 중에는 USB 연결을 유지하세요. 제작 환경에서 전처리, 재학습, 독립 평가, CSV 재생과 모의 직렬 통신을 검사했습니다. 실제 ESP32 연결과 사용자 PC에서의 창 표시는 아직 확인하지 못했습니다. 처음에는 CSV 재생으로 화면을 확인한 뒤 실제 COM 포트에 연결하세요.
 
-## 포함한 P01 착용 기준선
+## 포함한 착용 모델 기록
 
-`models/body/model.json`은 `data/body_P01`의 실제 착용 20세션으로 학습한 최근접 중심 분류기입니다. 5회 세션 분리 평가에서 293/400 구간 정답(73.25%), 불량 재현율 57.5%였습니다. 동일 P01의 세션 간 결과이며 다른 사람에 대한 정확도는 아닙니다.
+`models/body_P01_v0/`은 P01 착용 20세션(2026-11-13)으로 처음 학습한 **시행착오 기록용** 모델입니다. 세션 분리 평가 293/400(73.25%), 불량 재현율 57.5%였지만, 학습 데이터에 IMU2 값이 전부 0인 세션이 섞여 있어 실제 판정에는 쓰지 않습니다. 자세한 내용은 [models/body_P01_v0/README.md](models/body_P01_v0/README.md)에 있습니다. 착용 데이터 원본은 데이터 저장소 ALIGN-data의 `body/2026-11-13`에 있습니다.
 
-`run_demo.cmd`의 기본값은 계속 손 기울기 모델입니다. 창에서 **모델 선택 → models/body/model.json**을 고르거나, 이 폴더에서 다음 명령으로 실행합니다.
+착용 모델은 `body_P01_v0`, `body_P01_v1`처럼 버전 폴더로 쌓아 서로 비교할 수 있게 둡니다. `run_demo.cmd`의 기본값은 계속 손 기울기 모델입니다. 다른 모델은 창에서 **모델 선택**으로 고르거나 `--model`로 지정합니다.
 
 ```powershell
-py live_predict.py --port COM13 --model models/body/model.json
+py live_predict.py --port COM13 --model models/body_P01_v0/model.json
 ```
 
 학습기는 폴더와 ZIP에서 Excel `~$*.csv` 임시 파일을 제외하지만, 실제 원본 CSV의 열·숫자·세션 검사는 유지합니다.

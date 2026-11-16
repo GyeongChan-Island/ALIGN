@@ -243,8 +243,9 @@ results/
 # Excel / Office lock files are not measurement CSVs
 ~$*
 
-# Publish this P01 baseline explicitly; other generated body models stay local
-!python/ALIGN_live_demo/models/body/
-python/ALIGN_live_demo/models/body/*
-!python/ALIGN_live_demo/models/body/model.json
-!python/ALIGN_live_demo/models/body/evaluation.json
+# 착용 모델은 버전 폴더(body_P01_v0, v1 ...)의 기록 파일만 올린다. 다른 body 학습 결과는 로컬 전용
+!python/ALIGN_live_demo/models/body_P01_v*/
+python/ALIGN_live_demo/models/body_P01_v*/*
+!python/ALIGN_live_demo/models/body_P01_v*/model.json
+!python/ALIGN_live_demo/models/body_P01_v*/evaluation.json
+!python/ALIGN_live_demo/models/body_P01_v*/README.md
